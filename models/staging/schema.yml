@@ -1,0 +1,39 @@
+version: 2 # Enforces the modern dbt configuration syntax standard
+
+models:
+  - name: stg_orders
+    description: "Cleaned staging view for orders." # Automatically generates your data dictionary documentation
+    columns:
+      - name: order_id
+        description: "Primary key for orders." # Automatically generates your data dictionary documentation
+        tests:
+          - unique     # Ensures no duplicate order IDs exist in the table
+          - not_null   # Ensures no missing/blank order IDs exist
+      - name: customer_id
+        description: "Foreign key linking to customers."
+        tests:
+          - not_null
+          - relationships: # Enforces referential integrity (a foreign key check)
+              to: ref('stg_customers') # Ensures this customer ID actually exists in the stg_customers table
+              field: customer_id
+      - name: order_status
+        description: "Current status of the order."
+        tests:
+          - accepted_values: # Acts as a strict categorical filter
+              values: ['delivered', 'shipped', 'canceled', 'unavailable', 'invoiced', 'processing', 'created', 'approved'] # Fails the pipeline if an unexpected status (e.g., 'lost') appears
+
+  - name: stg_customers
+    description: "Cleaned staging view for customers."
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_products
+    description: "Cleaned staging view for products."
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
